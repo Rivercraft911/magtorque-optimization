@@ -154,7 +154,7 @@ def update_graphs():
     magnetic_moment = calculate_magnetic_moment(total_area, current)
     power_to_moment_ratio = current * voltage_V / magnetic_moment if magnetic_moment != 0 else np.inf
 
-    # Update Graphs
+    # Update  Graphs
     trace_widths = np.linspace(min_trace_width, max_trace_width, 100)
     magnetic_moments = [
         calculate_magnetic_moment(calculate_total_area(w, calculate_max_turns(w)),
