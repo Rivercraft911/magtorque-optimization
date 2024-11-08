@@ -154,7 +154,20 @@ def update_graphs():
     magnetic_moment = calculate_magnetic_moment(total_area, current)
     power_to_moment_ratio = current * voltage_V / magnetic_moment if magnetic_moment != 0 else np.inf
 
-    # Update  Graphs
+    # Update calculation display
+    result_text = (f"Optimal Trace Width: {optimal_trace_width * 1000:.3f} mm\n"
+                   f"Magnetic Moment: {magnetic_moment:.6f} A·m²\n"
+                   f"Power Consumption: {current * voltage_V:.6f} W\n"
+                   f"Current: {current:.6f} A\n"
+                   f"Resistance: {R:.6f} Ω\n"
+                   f"Current Density: {current / (optimal_trace_width * copper_thickness) / 1e6:.2f} A/mm²\n"
+                   f"Total Turns: {num_turns * coil_layers}\n"
+                   f"Turns per Layer: {num_turns}\n"
+                   f"Total Length of Coil: {total_length:.3f} m")
+
+    result_label.config(text=result_text)
+
+    # Update Graphs
     trace_widths = np.linspace(min_trace_width, max_trace_width, 100)
     magnetic_moments = [
         calculate_magnetic_moment(calculate_total_area(w, calculate_max_turns(w)),
@@ -183,6 +196,7 @@ def update_graphs():
     ax2.set_ylabel("Efficiency (W/A·m²)")
     ax2.legend()
 
+    fig.tight_layout()
     canvas.draw()
 
 # Tkinter GUI setup
@@ -190,40 +204,49 @@ root = tk.Tk()
 root.title("Magnetic Coil Optimization Tool")
 
 # Input fields for user parameters
-voltage_var = tk.DoubleVar(value=50.0)
-power_var = tk.DoubleVar(value=10.0)
-inner_length_var = tk.DoubleVar(value=30.0)
-inner_width_var = tk.DoubleVar(value=30.0)
-outer_length_var = tk.DoubleVar(value=100.0)
-outer_width_var = tk.DoubleVar(value=100.0)
-copper_weight_var = tk.DoubleVar(value=1.0)
-layers_var = tk.IntVar(value=2)
+voltage_var = tk.DoubleVar(value=8.0)
+power_var = tk.DoubleVar(value=0.5)
+inner_length_var = tk.DoubleVar(value=40.0)
+inner_width_var = tk.DoubleVar(value=40.0)
+outer_length_var = tk.DoubleVar(value=80.0)
+outer_width_var = tk.DoubleVar(value=80.0)
+copper_weight_var = tk.DoubleVar(value=2.0)
+layers_var = tk.IntVar(value=6)
 
 # Layout inputs with labels
-tk.Label(root, text="Voltage (V):").pack()
-tk.Entry(root, textvariable=voltage_var).pack()
-tk.Label(root, text="Max Power (W):").pack()
-tk.Entry(root, textvariable=power_var).pack()
-tk.Label(root, text="Inner Length (mm):").pack()
-tk.Entry(root, textvariable=inner_length_var).pack()
-tk.Label(root, text="Inner Width (mm):").pack()
-tk.Entry(root, textvariable=inner_width_var).pack()
-tk.Label(root, text="Outer Length (mm):").pack()
-tk.Entry(root, textvariable=outer_length_var).pack()
-tk.Label(root, text="Outer Width (mm):").pack()
-tk.Entry(root, textvariable=outer_width_var).pack()
-tk.Label(root, text="Copper Weight (oz):").pack()
-tk.Entry(root, textvariable=copper_weight_var).pack()
-tk.Label(root, text="Number of Layers:").pack()
-tk.Entry(root, textvariable=layers_var).pack()
+input_frame = tk.Frame(root)
+input_frame.pack(side=tk.LEFT, padx=10, pady=10)
+
+tk.Label(input_frame, text="Voltage (V):").pack()
+tk.Entry(input_frame, textvariable=voltage_var).pack()
+tk.Label(input_frame, text="Max Power (W):").pack()
+tk.Entry(input_frame, textvariable=power_var).pack()
+tk.Label(input_frame, text="Inner Length (mm):").pack()
+tk.Entry(input_frame, textvariable=inner_length_var).pack()
+tk.Label(input_frame, text="Inner Width (mm):").pack()
+tk.Entry(input_frame, textvariable=inner_width_var).pack()
+tk.Label(input_frame, text="Outer Length (mm):").pack()
+tk.Entry(input_frame, textvariable=outer_length_var).pack()
+tk.Label(input_frame, text="Outer Width (mm):").pack()
+tk.Entry(input_frame, textvariable=outer_width_var).pack()
+tk.Label(input_frame, text="Copper Weight (oz):").pack()
+tk.Entry(input_frame, textvariable=copper_weight_var).pack()
+tk.Label(input_frame, text="Number of Layers:").pack()
+tk.Entry(input_frame, textvariable=layers_var).pack()
 
 # Update button
-update_button = ttk.Button(root, text="Update Graphs", command=update_graphs)
-update_button.pack()
+update_button = ttk.Button(input_frame, text="Update Graphs", command=update_graphs)
+update_button.pack(pady=10)
+
+# Result display
+result_frame = tk.Frame(root)
+result_frame.pack(side=tk.LEFT, padx=10, pady=10)
+result_label = tk.Label(result_frame, text="Calculation Results:", anchor="w", justify="left")
+result_label.pack()
 
 # Set up Matplotlib figures with two subplots
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
 canvas = FigureCanvasTkAgg(fig, master=root)
-canvas.get_tk_widget().pack()
+canvas.get_tk_widget().pack(side=tk.LEFT)
 
 root.mainloop()
