@@ -11,6 +11,7 @@ min_trace_spacing = 0.0001  # Minimum trace spacing (m)
 voltage_V = float(input("Enter voltage supplied (V): "))
 max_power = float(input("Enter max power (W): "))
 
+
 # User Inputs
 inner_length_mm = float(input("Enter inner length (mm): "))
 inner_width_mm = float(input("Enter inner width (mm): "))
