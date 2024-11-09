@@ -13,7 +13,7 @@ min_trace_width = 0.1       # Minimum trace width (mm)
 max_trace_width = 10.0      # Maximum trace width (mm)
 min_trace_spacing = 0.1     # Minimum trace spacing (mm)
 
-# Define functions (calculations, as in your script)
+
 def calculate_max_turns(trace_width, outer_length, inner_length):
     if trace_width <= 0:
         return 0
