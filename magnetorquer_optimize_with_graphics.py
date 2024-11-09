@@ -111,7 +111,7 @@ def calculate_optimal_trace_width():
         objective_function,
         x0=[min_trace_width],
         bounds=[(min_trace_width, max_trace_width)],
-        method='SLSQP'
+        method='L-BFGS-B'
     )
     return result.x[0]
 

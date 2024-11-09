@@ -140,7 +140,7 @@ result = minimize(
     objective_function,
     x0=[min_trace_width],
     bounds=[(min_trace_width, max_trace_width)],
-    method='SLSQP'
+    method='L-BFGS-B'
 )
 
 # Output Results
