@@ -2,7 +2,10 @@
 
 A tool for calculating the optimal trace width to maximize magnetic moment for PCB magnetorquer coils with various copper weights. This tool helps design optimal PCB-based magnetorquer coils by considering various constraints like trace width, spacing, current density, and power limitations.
 
-![alt text](image.png)
+## Screenshots of magnetorquer_optimize_with_graphics.py
+
+![alt text](images/screenshot1.png)
+![alt text](images/screenshot2.png)
 
 ## Overview
 
@@ -10,7 +13,6 @@ This repository contains three different versions of the magnetorquer optimizati
 
 1. `magnetorquer_optimization.py` - Command line version with basic functionality
 2. `magnetorquer_optimize_with_graphics.py` - GUI version with interactive graphs
-3. `magnetorquer_inner_width_&trace_optimize.py` - Modified version focusing on inner width optimization
 
 ## Prerequisites
 
