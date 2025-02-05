@@ -9,7 +9,7 @@ A tool for calculating the optimal trace width to maximize magnetic moment for P
 
 ## Overview
 
-This repository contains three different versions of the magnetorquer optimization tool:
+This repository contains two different versions of the magnetorquer optimization tool:
 
 1. `magnetorquer_optimization.py` - Command line version with basic functionality
 2. `magnetorquer_optimize_with_graphics.py` - GUI version with interactive graphs
