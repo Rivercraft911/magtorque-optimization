@@ -130,13 +130,18 @@ def objective_function(x):
 
     return -m  # Negative because we are minimizing
 
-
 class MagnetorquerOptimizer(tk.Tk):
     def __init__(self):
         super().__init__()
 
         self.title("Magnetorquer Coil Optimization Tool")
         self.configure(bg='#f0f0f0')
+        
+        # Initialize variables first
+        self.initialize_variables()
+        
+        # Create matplotlib figure before creating frames
+        self.create_figure()
         
         # Set up the main container with grid
         self.main_container = ttk.Frame(self)
@@ -147,50 +152,44 @@ class MagnetorquerOptimizer(tk.Tk):
         style.configure('Title.TLabel', font=('Helvetica', 14, 'bold'))
         style.configure('Results.TLabel', font=('Courier', 10))
         
-        # Create frames
+        # Create frames in the correct order
         self.create_input_frame()
         self.create_results_frame()
         self.create_graphs_frame()
         
-        # Initialize variables
-        self.initialize_variables()
-        
-        # Create matplotlib figure
-        self.create_figure()
-        
         # Initial update
         self.update_graphs()
+
+    def initialize_variables(self):
+        self.voltage_var = tk.DoubleVar(value=8.0)
+        self.power_var = tk.DoubleVar(value=0.5)
+        self.inner_length_var = tk.DoubleVar(value=40.0)
+        self.inner_width_var = tk.DoubleVar(value=40.0)
+        self.outer_length_var = tk.DoubleVar(value=80.0)
+        self.outer_width_var = tk.DoubleVar(value=80.0)
+        self.copper_weight_var = tk.DoubleVar(value=2.0)
+        self.layers_var = tk.IntVar(value=6)
 
     def create_input_frame(self):
         input_frame = ttk.LabelFrame(self.main_container, text="Input Parameters", padding="10")
         input_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
-        # Create a grid of labels and entries
         parameters = [
-            ("Voltage (V)", "voltage_var", 8.0),
-            ("Max Power (W)", "power_var", 0.5),
-            ("Inner Length (mm)", "inner_length_var", 40.0),
-            ("Inner Width (mm)", "inner_width_var", 40.0),
-            ("Outer Length (mm)", "outer_length_var", 80.0),
-            ("Outer Width (mm)", "outer_width_var", 80.0),
-            ("Copper Weight (oz)", "copper_weight_var", 2.0),
-            ("Number of Layers", "layers_var", 6)
+            ("Voltage (V)", self.voltage_var),
+            ("Max Power (W)", self.power_var),
+            ("Inner Length (mm)", self.inner_length_var),
+            ("Inner Width (mm)", self.inner_width_var),
+            ("Outer Length (mm)", self.outer_length_var),
+            ("Outer Width (mm)", self.outer_width_var),
+            ("Copper Weight (oz)", self.copper_weight_var),
+            ("Number of Layers", self.layers_var)
         ]
 
-        for i, (label_text, var_name, default_value) in enumerate(parameters):
+        for i, (label_text, var) in enumerate(parameters):
             ttk.Label(input_frame, text=label_text).grid(row=i, column=0, sticky="w", pady=2)
-            entry = ttk.Entry(input_frame, width=10)
+            entry = ttk.Entry(input_frame, width=10, textvariable=var)
             entry.grid(row=i, column=1, padx=5, pady=2)
-            
-            # Create and set variable
-            if var_name == "layers_var":
-                var = tk.IntVar(value=default_value)
-            else:
-                var = tk.DoubleVar(value=default_value)
-            setattr(self, var_name, var)
-            entry.config(textvariable=getattr(self, var_name))
 
-        # Update button
         ttk.Button(input_frame, text="Update", command=self.update_graphs).grid(
             row=len(parameters), column=0, columnspan=2, pady=10)
 
@@ -201,21 +200,19 @@ class MagnetorquerOptimizer(tk.Tk):
         self.result_label = ttk.Label(results_frame, style='Results.TLabel', justify="left")
         self.result_label.grid(row=0, column=0, sticky="w")
 
+    def create_figure(self):
+        self.fig = Figure(figsize=(10, 8), dpi=100)
+        self.ax1 = self.fig.add_subplot(211)
+        self.ax2 = self.fig.add_subplot(212)
+        plt.style.use('seaborn')
+        self.fig.patch.set_facecolor('#f0f0f0')
+
     def create_graphs_frame(self):
         graphs_frame = ttk.LabelFrame(self.main_container, text="Visualization", padding="10")
         graphs_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=5, pady=5)
         
         self.canvas = FigureCanvasTkAgg(self.fig, master=graphs_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-    def create_figure(self):
-        self.fig = Figure(figsize=(10, 8), dpi=100)
-        self.ax1 = self.fig.add_subplot(211)
-        self.ax2 = self.fig.add_subplot(212)
-        
-        # Set style for better visibility
-        plt.style.use('seaborn')
-        self.fig.patch.set_facecolor('#f0f0f0')
 
     def update_graphs(self):
         # Get values from GUI
