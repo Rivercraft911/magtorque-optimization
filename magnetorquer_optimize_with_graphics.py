@@ -204,7 +204,7 @@ class MagnetorquerOptimizer(tk.Tk):
         self.fig = Figure(figsize=(10, 8), dpi=100)
         self.ax1 = self.fig.add_subplot(211)
         self.ax2 = self.fig.add_subplot(212)
-        plt.style.use('seaborn')
+        plt.style.use('classic')
         self.fig.patch.set_facecolor('#f0f0f0')
 
     def create_graphs_frame(self):
@@ -290,7 +290,6 @@ class MagnetorquerOptimizer(tk.Tk):
             self.ax2.set_ylabel("Power/Moment Ratio (W/A·m²)")
             self.ax2.grid(True, linestyle='--', alpha=0.7)
             self.ax2.legend()
-
             self.fig.tight_layout()
             self.canvas.draw()
 

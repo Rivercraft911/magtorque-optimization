@@ -2,6 +2,8 @@
 
 A tool for calculating the optimal trace width to maximize magnetic moment for PCB magnetorquer coils with various copper weights. This tool helps design optimal PCB-based magnetorquer coils by considering various constraints like trace width, spacing, current density, and power limitations.
 
+![alt text](image.png)
+
 ## Overview
 
 This repository contains three different versions of the magnetorquer optimization tool:
