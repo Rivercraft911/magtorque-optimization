@@ -87,10 +87,10 @@ This provides an interactive interface where you can:
 
 - **Voltage**:
 - **Power**:
-- **Trace Width**: 0.15mm - 10mm (constrained by manufacturing)
-- **Trace Spacing**: Minimum 0.15mm (manufacturing dependent)
-- **Copper Weight**: USE 2.0 OZ
-- **Number of Layers**: Usually 1-8 (PCB manufacturing dependent) For samwise use 6
+- **Trace Width**: 
+- **Trace Spacing**: 
+- **Copper Weight**: 
+- **Number of Layers**: Samwise - 6
 
 ## Contributing
 
