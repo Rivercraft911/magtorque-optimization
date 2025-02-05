@@ -1,9 +1,10 @@
 import numpy as np
 from scipy.optimize import minimize
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, font
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 # Constants and Constraints
 rho_copper = 1.68e-8        # Copper resistivity (Ω·m)
@@ -130,123 +131,175 @@ def objective_function(x):
     return -m  # Negative because we are minimizing
 
 
-def update_graphs():
-    global voltage_V, max_power, inner_length, inner_width, outer_length, outer_width, copper_thickness, coil_layers
+class MagnetorquerOptimizer(tk.Tk):
+    def __init__(self):
+        super().__init__()
 
-    # Fetch user input values from the GUI variables
-    voltage_V = voltage_var.get()
-    max_power = power_var.get()
-    inner_length = inner_length_var.get() / 1000
-    inner_width = inner_width_var.get() / 1000
-    outer_length = outer_length_var.get() / 1000
-    outer_width = outer_width_var.get() / 1000
-    copper_weight_oz = copper_weight_var.get()
-    copper_thickness = copper_weight_oz * oz_to_m
-    coil_layers = layers_var.get() - 1  # Adjust for coil layers
+        self.title("Magnetorquer Coil Optimization Tool")
+        self.configure(bg='#f0f0f0')
+        
+        # Set up the main container with grid
+        self.main_container = ttk.Frame(self)
+        self.main_container.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        
+        # Configure style
+        style = ttk.Style()
+        style.configure('Title.TLabel', font=('Helvetica', 14, 'bold'))
+        style.configure('Results.TLabel', font=('Courier', 10))
+        
+        # Create frames
+        self.create_input_frame()
+        self.create_results_frame()
+        self.create_graphs_frame()
+        
+        # Initialize variables
+        self.initialize_variables()
+        
+        # Create matplotlib figure
+        self.create_figure()
+        
+        # Initial update
+        self.update_graphs()
 
-    # Calculate optimal trace width using the updated parameters
-    optimal_trace_width = calculate_optimal_trace_width()
-    num_turns = calculate_max_turns(optimal_trace_width)
-    total_length = calculate_total_length(optimal_trace_width, num_turns)
-    R = calculate_resistance(optimal_trace_width, total_length)
-    current = calculate_current(R, optimal_trace_width)
-    total_area = calculate_total_area(optimal_trace_width, num_turns)
-    magnetic_moment = calculate_magnetic_moment(total_area, current)
-    power_to_moment_ratio = current * voltage_V / magnetic_moment if magnetic_moment != 0 else np.inf
+    def create_input_frame(self):
+        input_frame = ttk.LabelFrame(self.main_container, text="Input Parameters", padding="10")
+        input_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
-    # Update calculation display
-    result_text = (f"Optimal Trace Width: {optimal_trace_width * 1000:.3f} mm\n"
-                   f"Magnetic Moment: {magnetic_moment:.6f} A·m²\n"
-                   f"Power Consumption: {current * voltage_V:.6f} W\n"
-                   f"Current: {current:.6f} A\n"
-                   f"Resistance: {R:.6f} Ω\n"
-                   f"Current Density: {current / (optimal_trace_width * copper_thickness) / 1e6:.2f} A/mm²\n"
-                   f"Total Turns: {num_turns * coil_layers}\n"
-                   f"Turns per Layer: {num_turns}\n"
-                   f"Total Length of Coil: {total_length:.3f} m")
+        # Create a grid of labels and entries
+        parameters = [
+            ("Voltage (V)", "voltage_var", 8.0),
+            ("Max Power (W)", "power_var", 0.5),
+            ("Inner Length (mm)", "inner_length_var", 40.0),
+            ("Inner Width (mm)", "inner_width_var", 40.0),
+            ("Outer Length (mm)", "outer_length_var", 80.0),
+            ("Outer Width (mm)", "outer_width_var", 80.0),
+            ("Copper Weight (oz)", "copper_weight_var", 2.0),
+            ("Number of Layers", "layers_var", 6)
+        ]
 
-    result_label.config(text=result_text)
+        for i, (label_text, var_name, default_value) in enumerate(parameters):
+            ttk.Label(input_frame, text=label_text).grid(row=i, column=0, sticky="w", pady=2)
+            entry = ttk.Entry(input_frame, width=10)
+            entry.grid(row=i, column=1, padx=5, pady=2)
+            
+            # Create and set variable
+            if var_name == "layers_var":
+                var = tk.IntVar(value=default_value)
+            else:
+                var = tk.DoubleVar(value=default_value)
+            setattr(self, var_name, var)
+            entry.config(textvariable=getattr(self, var_name))
 
-    # Update Graphs
-    trace_widths = np.linspace(min_trace_width, max_trace_width, 100)
-    magnetic_moments = [
-        calculate_magnetic_moment(calculate_total_area(w, calculate_max_turns(w)),
-                                  calculate_current(
-                                      calculate_resistance(w, calculate_total_length(w, calculate_max_turns(w))), w))
-        for w in trace_widths
-    ]
-    power_to_moment_ratios = [
-        (calculate_current(calculate_resistance(w, calculate_total_length(w, calculate_max_turns(w))),
-                           w) * voltage_V / m if m != 0 else np.inf)
-        for w, m in zip(trace_widths, magnetic_moments)
-    ]
-    ax1.clear()
-    ax1.plot(trace_widths, magnetic_moments, label="Magnetic Moment")
-    ax1.axvline(optimal_trace_width, color="r", linestyle="--", label="Optimal Width")
-    ax1.set_title("Magnetic Moment vs. Trace Width")
-    ax1.set_xlabel("Trace Width (m)")
-    ax1.set_ylabel("Magnetic Moment (A·m²)")
-    ax1.legend()
+        # Update button
+        ttk.Button(input_frame, text="Update", command=self.update_graphs).grid(
+            row=len(parameters), column=0, columnspan=2, pady=10)
 
-    ax2.clear()
-    ax2.plot(trace_widths, power_to_moment_ratios, label="Power-to-Magnetic Moment Ratio")
-    ax2.axvline(optimal_trace_width, color="r", linestyle="--", label="Optimal Width")
-    ax2.set_title("Power/Magnetic Moment Ratio vs. Trace Width")
-    ax2.set_xlabel("Trace Width (m)")
-    ax2.set_ylabel("Efficiency (W/A·m²)")
-    ax2.legend()
+    def create_results_frame(self):
+        results_frame = ttk.LabelFrame(self.main_container, text="Results", padding="10")
+        results_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        
+        self.result_label = ttk.Label(results_frame, style='Results.TLabel', justify="left")
+        self.result_label.grid(row=0, column=0, sticky="w")
 
-    fig.tight_layout()
-    canvas.draw()
+    def create_graphs_frame(self):
+        graphs_frame = ttk.LabelFrame(self.main_container, text="Visualization", padding="10")
+        graphs_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=5, pady=5)
+        
+        self.canvas = FigureCanvasTkAgg(self.fig, master=graphs_frame)
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-# Tkinter GUI setup
-root = tk.Tk()
-root.title("Magnetic Coil Optimization Tool")
+    def create_figure(self):
+        self.fig = Figure(figsize=(10, 8), dpi=100)
+        self.ax1 = self.fig.add_subplot(211)
+        self.ax2 = self.fig.add_subplot(212)
+        
+        # Set style for better visibility
+        plt.style.use('seaborn')
+        self.fig.patch.set_facecolor('#f0f0f0')
 
-# Input fields for user parameters
-voltage_var = tk.DoubleVar(value=8.0)
-power_var = tk.DoubleVar(value=0.5)
-inner_length_var = tk.DoubleVar(value=40.0)
-inner_width_var = tk.DoubleVar(value=40.0)
-outer_length_var = tk.DoubleVar(value=80.0)
-outer_width_var = tk.DoubleVar(value=80.0)
-copper_weight_var = tk.DoubleVar(value=2.0)
-layers_var = tk.IntVar(value=6)
+    def update_graphs(self):
+        # Get values from GUI
+        global voltage_V, max_power, inner_length, inner_width, outer_length, outer_width, copper_thickness, coil_layers
+        
+        voltage_V = self.voltage_var.get()
+        max_power = self.power_var.get()
+        inner_length = self.inner_length_var.get() / 1000
+        inner_width = self.inner_width_var.get() / 1000
+        outer_length = self.outer_length_var.get() / 1000
+        outer_width = self.outer_width_var.get() / 1000
+        copper_weight_oz = self.copper_weight_var.get()
+        copper_thickness = copper_weight_oz * oz_to_m
+        coil_layers = self.layers_var.get()
 
-# Layout inputs with labels
-input_frame = tk.Frame(root)
-input_frame.pack(side=tk.LEFT, padx=10, pady=10)
+        try:
+            # Calculate optimal values
+            optimal_trace_width = calculate_optimal_trace_width()
+            num_turns = calculate_max_turns(optimal_trace_width)
+            total_length = calculate_total_length(optimal_trace_width, num_turns)
+            R = calculate_resistance(optimal_trace_width, total_length)
+            current = calculate_current(R, optimal_trace_width)
+            total_area = calculate_total_area(optimal_trace_width, num_turns)
+            magnetic_moment = calculate_magnetic_moment(total_area, current)
 
-tk.Label(input_frame, text="Voltage (V):").pack()
-tk.Entry(input_frame, textvariable=voltage_var).pack()
-tk.Label(input_frame, text="Max Power (W):").pack()
-tk.Entry(input_frame, textvariable=power_var).pack()
-tk.Label(input_frame, text="Inner Length (mm):").pack()
-tk.Entry(input_frame, textvariable=inner_length_var).pack()
-tk.Label(input_frame, text="Inner Width (mm):").pack()
-tk.Entry(input_frame, textvariable=inner_width_var).pack()
-tk.Label(input_frame, text="Outer Length (mm):").pack()
-tk.Entry(input_frame, textvariable=outer_length_var).pack()
-tk.Label(input_frame, text="Outer Width (mm):").pack()
-tk.Entry(input_frame, textvariable=outer_width_var).pack()
-tk.Label(input_frame, text="Copper Weight (oz):").pack()
-tk.Entry(input_frame, textvariable=copper_weight_var).pack()
-tk.Label(input_frame, text="Number of Layers:").pack()
-tk.Entry(input_frame, textvariable=layers_var).pack()
+            # Update results display
+            result_text = (
+                f"Optimal Design Parameters:\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"Trace Width:      {optimal_trace_width * 1000:.3f} mm\n"
+                f"Magnetic Moment:  {magnetic_moment:.6f} A·m²\n"
+                f"Power Usage:      {current * voltage_V:.3f} W\n"
+                f"Current:          {current:.3f} A\n"
+                f"Resistance:       {R:.3f} Ω\n"
+                f"Current Density:  {current / (optimal_trace_width * copper_thickness) / 1e6:.2f} A/mm²\n"
+                f"Total Turns:      {num_turns * coil_layers}\n"
+                f"Turns per Layer:  {num_turns}\n"
+                f"Total Length:     {total_length:.3f} m"
+            )
+            self.result_label.config(text=result_text)
 
-# Update button
-update_button = ttk.Button(input_frame, text="Update Graphs", command=update_graphs)
-update_button.pack(pady=10)
+            # Clear previous plots
+            self.ax1.clear()
+            self.ax2.clear()
 
-# Result display
-result_frame = tk.Frame(root)
-result_frame.pack(side=tk.LEFT, padx=10, pady=10)
-result_label = tk.Label(result_frame, text="Calculation Results:", anchor="w", justify="left")
-result_label.pack()
+            # Generate data for plots
+            trace_widths = np.linspace(min_trace_width, max_trace_width, 200)
+            magnetic_moments = []
+            power_to_moment_ratios = []
 
-# Set up Matplotlib figures with two subplots
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
-canvas = FigureCanvasTkAgg(fig, master=root)
-canvas.get_tk_widget().pack(side=tk.LEFT)
+            for w in trace_widths:
+                n_turns = calculate_max_turns(w)
+                t_length = calculate_total_length(w, n_turns)
+                r = calculate_resistance(w, t_length)
+                i = calculate_current(r, w)
+                t_area = calculate_total_area(w, n_turns)
+                m = calculate_magnetic_moment(t_area, i)
+                magnetic_moments.append(m)
+                power_to_moment_ratios.append((i * voltage_V / m) if m != 0 else np.inf)
 
-root.mainloop()
+            # Plot magnetic moment
+            self.ax1.plot(trace_widths * 1000, magnetic_moments, 'b-', label="Magnetic Moment")
+            self.ax1.axvline(optimal_trace_width * 1000, color='r', linestyle='--', label="Optimal Width")
+            self.ax1.set_title("Magnetic Moment vs. Trace Width", pad=10)
+            self.ax1.set_xlabel("Trace Width (mm)")
+            self.ax1.set_ylabel("Magnetic Moment (A·m²)")
+            self.ax1.grid(True, linestyle='--', alpha=0.7)
+            self.ax1.legend()
+
+            # Plot power to moment ratio
+            self.ax2.plot(trace_widths * 1000, power_to_moment_ratios, 'g-', label="Power/Moment Ratio")
+            self.ax2.axvline(optimal_trace_width * 1000, color='r', linestyle='--', label="Optimal Width")
+            self.ax2.set_title("Power/Magnetic Moment Ratio vs. Trace Width", pad=10)
+            self.ax2.set_xlabel("Trace Width (mm)")
+            self.ax2.set_ylabel("Power/Moment Ratio (W/A·m²)")
+            self.ax2.grid(True, linestyle='--', alpha=0.7)
+            self.ax2.legend()
+
+            self.fig.tight_layout()
+            self.canvas.draw()
+
+        except Exception as e:
+            self.result_label.config(text=f"Error in calculations: {str(e)}")
+
+if __name__ == "__main__":
+    app = MagnetorquerOptimizer()
+    app.mainloop()

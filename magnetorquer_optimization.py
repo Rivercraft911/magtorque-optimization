@@ -5,9 +5,9 @@ from scipy.optimize import minimize
 rho_copper = 1.68e-8        # Copper resistivity (Ω·m)
 oz_to_m = 0.035e-3         # Copper weight to meters conversion (m)
 J_max = 2.5e8                # Maximum current density (A/m²)
-min_trace_width = 0.00015    # Minimum trace width (m)
+min_trace_width = 0.00018    # Minimum trace width (m)
 max_trace_width = 0.0100    # Maximum trace width (m)
-min_trace_spacing = 0.00015  # Minimum trace spacing (m)
+min_trace_spacing = 0.0002  # Minimum trace spacing (m)
 voltage_V = float(input("Enter voltage supplied (V): "))
 max_power = float(input("Enter max power (W): "))
 
