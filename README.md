@@ -40,7 +40,7 @@ This repository contains two different versions of the magnetorquer optimization
 ## Usage
 
 ### Command Line Version
-Run the basic optimization script:
+Run the basic optimization script: (I recommend using the graphical onen as this one is outdated)
 ```bash
 python magnetorquer_optimization.py
 ```
